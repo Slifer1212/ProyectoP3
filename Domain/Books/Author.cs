@@ -4,6 +4,7 @@ namespace Core.Books;
 
 public class Author : Person
 {
+    public Guid Id { get; private set; }
     public string Biography { get; private set; }
     public DateTime? BirthDate { get; private set; }
     public DateTime? DeathDate { get; private set; }
@@ -39,6 +40,7 @@ public class Author : Person
 
         var author = new Author
         {
+            Id = Guid.NewGuid(),
             Name = firstName,
             LastName = lastName,
             Biography = biography,

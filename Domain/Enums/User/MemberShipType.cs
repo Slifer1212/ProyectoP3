@@ -4,5 +4,6 @@ public enum MemberShipType
 {
     Basic,
     Premium,
-    Vip
+    Vip,
+    None
 }
