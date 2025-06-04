@@ -2,6 +2,7 @@
 
 using Core.BaseEntities;
 using Core.Enums;
+using Core.Enums.User;
 
 namespace Core.Users;
 

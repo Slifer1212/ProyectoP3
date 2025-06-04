@@ -7,8 +7,8 @@ public class Librarian : LibraryUser
 {
     public string Department { get; private set; }
     public DateTime HireDate { get; private set; }
-    public bool CanManageBooks { get; private set; } = true;
-    public bool CanManageUsers { get; private set; } = false;
+    public override bool CanManageBooks { get;  set; } = true;
+    public override bool CanManageUsers { get;  set; } = false;
     
     public override string Role { get; } = "Librarian";
 

@@ -11,6 +11,9 @@ public class Member : LibraryUser
     public DateTime MembershipStartDate { get; private set; }
     public decimal OutstandingFines { get; private set; }
     public bool IsActive { get; private set; } = true;
+    
+    public override bool CanManageBooks { get;  set; } = false;
+    public override bool CanManageUsers { get;  set; } = false;
 
     public MemberShipState MemberShipState { get; private set; } = MemberShipState.Active;
 

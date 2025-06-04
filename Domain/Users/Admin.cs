@@ -7,6 +7,9 @@ public class Admin : LibraryUser
 {
     public override string Role { get; } = "Admin";
     
+    public override bool CanManageBooks { get;  set; } = true;
+    public override bool CanManageUsers { get;  set; } = true;
+    
     private Admin() { }
 
     public static DomainResult<Admin> Create(Guid identityUserId, string firstName, string lastName, string email)

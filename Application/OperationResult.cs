@@ -1,4 +1,4 @@
-﻿namespace Core.BaseEntities;
+﻿namespace Application;
 
 public class OperationResult<T>
 {

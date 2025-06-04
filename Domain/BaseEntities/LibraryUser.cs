@@ -6,6 +6,9 @@ public abstract class LibraryUser : Person
     public Guid IdentityUserId { get; protected set; } 
     public string Email { get; protected set; }
     public string PhoneNumber { get; protected set; }
+    
+    public virtual bool CanManageBooks { get;  set; }
+    public virtual bool CanManageUsers { get;  set; } 
 
     public abstract string Role { get; }
     
