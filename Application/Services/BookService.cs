@@ -1,9 +1,8 @@
-﻿using Application.Dtos;
-using Application.Dtos.BookDto;
+﻿using Application.Dtos.BookDto;
 using Application.Interfaces;
 using Application.Interfaces.Services;
-using AutoMapper;
 using Core.Books;
+using MapsterMapper;
 
 namespace Application.Services;
 
@@ -28,10 +27,10 @@ public class BookService : IBookService
         return OperationResult<BookDto>.Success(bookDto);
     }
 
-    public Task<OperationResult<IEnumerable<BookDto>>> GetAllAsync()
+    public async Task<OperationResult<IEnumerable<BookDto>>> GetAllAsync()
     {
         var books = _unitOfWork.Books.GetAllAsync();
-        return books.ContinueWith(task =>
+        return await books.ContinueWith(task =>
         {
             var bookDtos = _mapper.Map<IEnumerable<BookDto>>(task.Result).ToList();
             return OperationResult<IEnumerable<BookDto>>.Success(bookDtos);

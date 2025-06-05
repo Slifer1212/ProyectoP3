@@ -25,7 +25,7 @@ public class AdminConfiguration : AuditEntityConfiguration<Admin>
 
         builder.Property(a => a.PhoneNumber)
             .HasMaxLength(20)
-            .IsRequired(false); // Opcional según tu modelo
+            .IsRequired(false); 
 
         // Propiedades heredadas de Person
         builder.Property(a => a.Name)

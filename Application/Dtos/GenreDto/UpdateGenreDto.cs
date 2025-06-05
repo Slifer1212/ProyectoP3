@@ -1,8 +1,6 @@
-﻿using Application.Dtos.BaseDto;
+﻿namespace Application.Dtos.GenreDto;
 
-namespace Application.Dtos.GenreDto;
-
-public class GenreDto : AuditEntityDto
+public class UpdateGenreDto
 {
     public Guid Id {get;  set;}
     public string? Name { get; set; }

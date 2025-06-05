@@ -1,5 +1,6 @@
 ﻿using Core.BaseEntities;
 using Core.Enums;
+using Core.Enums.Book;
 
 namespace Core.Books;
 

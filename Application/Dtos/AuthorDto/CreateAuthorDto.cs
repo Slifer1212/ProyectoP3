@@ -2,9 +2,8 @@
 
 namespace Application.Dtos.AuthorDto;
 
-public class AuthorDto : PersonDto
+public class CreateAuthorDto : PersonDto
 {
-    public Guid Id { get; set; }
     public string? Biography { get; set; }
     public DateTime? BirthDate { get; set; }
     public DateTime? DeathDate { get; set; }

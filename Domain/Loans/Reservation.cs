@@ -1,6 +1,4 @@
-﻿// Domain/Loans/Reservation.cs
-
-using Core.BaseEntities;
+﻿using Core.BaseEntities;
 using Core.Enums;
 using Core.Enums.Loans;
 
@@ -23,7 +21,6 @@ public class Reservation : AuditEntity
     {
     }
 
-    // Factory method y métodos de dominio - tú implementas
     public static DomainResult<Reservation> Create(Guid bookId, Guid memberId, int reservationDays = 7)
     {
         var errors = new List<string>();
@@ -47,7 +44,7 @@ public class Reservation : AuditEntity
             ReservationDate = DateTime.UtcNow,
             ExpirationDate = DateTime.UtcNow.AddDays(reservationDays),
             Status = ReservationStatus.Pending,
-            QueuePosition = 1 // Default to first position, can be updated later
+            QueuePosition = 1 
         };
 
         return DomainResult<Reservation>.Success(reservation);

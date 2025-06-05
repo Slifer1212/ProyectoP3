@@ -1,7 +1,4 @@
-﻿// Domain/Loans/Fine.cs
-
-using Core.BaseEntities;
-using Core.Enums;
+﻿using Core.BaseEntities;
 using Core.Enums.Loans;
 
 namespace Core.Loans;

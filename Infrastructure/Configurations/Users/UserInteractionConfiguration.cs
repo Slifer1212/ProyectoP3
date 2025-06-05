@@ -1,7 +1,4 @@
-﻿
-// Infrastructure/Persistence/Configurations/Users/UserInteractionConfiguration.cs
-
-using Core.Users;
+﻿using Core.Users;
 using Infraestructure.Configurations.BaseConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -42,7 +39,7 @@ public class UserInteractionConfiguration : AuditEntityConfiguration<UserInterac
             .IsRequired(false);
 
         builder.Property(ui => ui.TimeSpentMinutes)
-            .IsRequired(false)
+            .IsRequired()
             .HasDefaultValue(0);
 
         builder.Property(ui => ui.SearchQuery)

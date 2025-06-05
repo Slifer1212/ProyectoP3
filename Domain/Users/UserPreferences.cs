@@ -33,7 +33,6 @@ public class UserPreferences : AuditEntity
     {
     }
 
-    // Factory method y métodos de dominio - tú implementas
     public static DomainResult<UserPreferences> Create(Guid memberId)
     {
         var errors = new List<string>();
