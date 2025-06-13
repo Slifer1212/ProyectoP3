@@ -2,7 +2,7 @@
 
 namespace Application.Interfaces.Repositories;
 
-public interface IBookRepository : IBaseRepository<Book ,  Guid>
+public interface IBookRepository : IBaseRepository<Book , Guid>
 {
     Task<Book?> GetByIsbnAsync(string isbn);
     Task<IEnumerable<Book>> GetByAuthorAsync(Guid authorId);
