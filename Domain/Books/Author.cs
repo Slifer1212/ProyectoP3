@@ -4,11 +4,11 @@ namespace Core.Books;
 
 public class Author : Person
 {
-    public Guid Id { get; private set; }
-    public string Biography { get; private set; }
-    public DateTime? BirthDate { get; private set; }
-    public DateTime? DeathDate { get; private set; }
-    public string Nationality { get; private set; }
+    public Guid Id { get;  set; }
+    public string Biography { get;  set; }
+    public DateTime? BirthDate { get;  set; }
+    public DateTime? DeathDate { get;  set; }
+    public string Nationality { get;  set; }
     
     private readonly List<Guid> _bookIds = new();
     public IReadOnlyList<Guid> BookIds => _bookIds.AsReadOnly();

@@ -1,7 +1,9 @@
 ﻿using Application.Dtos.BookDto;
 using Application.Interfaces;
 using Application.Interfaces.Services;
+using Application.Validators.Bussiness.Interfaces;
 using Core.Books;
+using FluentValidation;
 using MapsterMapper;
 
 namespace Application.Services;
@@ -10,11 +12,16 @@ public class BookService : IBookService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-
-    public BookService(IUnitOfWork unitOfWork, IMapper mapper)
+    private readonly IValidator<CreateBookDto> _createValidator;
+    private readonly IValidator<UpdateBookDto> _updateValidator;
+    private readonly IBussinessValidator<CreateBookDto , UpdateBookDto ,Guid> _businessValidator;
+    public BookService(IUnitOfWork unitOfWork, IMapper mapper, IValidator<CreateBookDto> createValidator, IValidator<UpdateBookDto> updateValidator, IBussinessValidator<CreateBookDto, UpdateBookDto, Guid> businessValidator)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
+        _businessValidator = businessValidator;
     }
 
     public async Task<OperationResult<BookDto>> GetByIdAsync(Guid id)
@@ -29,43 +36,44 @@ public class BookService : IBookService
 
     public async Task<OperationResult<IEnumerable<BookDto>>> GetAllAsync()
     {
-        var books = _unitOfWork.Books.GetAllAsync();
-        return await books.ContinueWith(task =>
-        {
-            var bookDtos = _mapper.Map<IEnumerable<BookDto>>(task.Result).ToList();
-            return OperationResult<IEnumerable<BookDto>>.Success(bookDtos);
-        });
+        var books = await _unitOfWork.Books.GetAllAsync();
+        var bookDtos = _mapper.Map<IEnumerable<BookDto>>(books);
+        return OperationResult<IEnumerable<BookDto>>.Success(bookDtos);
     }
 
     public async Task<OperationResult<BookDto>> CreateAsync(CreateBookDto dto)
     {
-        // Verificar si el ISBN ya existe
-        var existingBook = await _unitOfWork.Books.GetByIsbnAsync(dto.Isbn);
-        if (existingBook != null)
-            return OperationResult<BookDto>.Failure("A book with this ISBN already exists");
-
-        // Validar que el autor existe
-        var author = await _unitOfWork.Authors.GetByIdAsync(dto.AuthorId);
-        if (author == null)
-            return OperationResult<BookDto>.Failure("Author not found");
-
-        // Validar géneros
-        var genres = new List<Genre>();
-        foreach (var genreId in dto.GenreIds)
+          // 1. Format validation (synchronous)
+        var formatValidation = await _createValidator.ValidateAsync(dto);
+        if (!formatValidation.IsValid)
         {
-            var genre = await _unitOfWork.Genres.GetByIdAsync(genreId);
-            if (genre == null)
-                return OperationResult<BookDto>.Failure($"Genre with ID {genreId} not found");
-            genres.Add(genre);
+            var errors = formatValidation.Errors.Select(e => e.ErrorMessage).ToList();
+            return OperationResult<BookDto>.Failure(string.Join("; ", errors));
         }
 
-        // Crear el libro usando el factory method del dominio
+        // 2. Business/DB validation (asynchronous)
+        var (isValid, businessErrors) = await _businessValidator.ValidateCreateAsync(dto);
+        if (!isValid)
+        {
+            return OperationResult<BookDto>.Failure(string.Join("; ", businessErrors));
+        }
+
+        // 3. Get required entities (already validated)
+        var author = await _unitOfWork.Authors.GetByIdAsync(dto.AuthorId);
+        var genres = new List<Genre>();
+        foreach (var genreId in dto.GenreIds ?? new List<Guid>())
+        {
+            var genre = await _unitOfWork.Genres.GetByIdAsync(genreId);
+            genres.Add(genre!); // We know it exists due to prior validation
+        }
+
+        // 4. Create the book using the domain factory method
         var bookResult = Book.Create(
             dto.Title,
             dto.Isbn,
             dto.PublicationYear,
             dto.AuthorId,
-            author,
+            author!,
             genres.First(),
             dto.Publisher,
             dto.Description
@@ -76,7 +84,7 @@ public class BookService : IBookService
 
         var book = bookResult.Data;
 
-        // Agregar los géneros adicionales
+        // 5. Add additional genres
         foreach (var genre in genres.Skip(1))
         {
             var addGenreResult = book.AddGenre(genre.Id);
@@ -84,22 +92,129 @@ public class BookService : IBookService
                 return OperationResult<BookDto>.Failure(addGenreResult.ErrorMessage);
         }
 
-        // Guardar en el repositorio
-        await _unitOfWork.Books.AddAsync(book);
-        await _unitOfWork.SaveChangesAsync();
+        try
+        {
+            // 6. Save to repository
+            await _unitOfWork.Books.AddAsync(book);
+            await _unitOfWork.SaveChangesAsync();
 
-        var bookDto = _mapper.Map<BookDto>(book);
-        return OperationResult<BookDto>.Success(bookDto);
+            // 7. Reload the book with all its relationships
+            var savedBook = await _unitOfWork.Books.GetBookWithCopiesAsync(book.Id);
+            var bookDto = _mapper.Map<BookDto>(savedBook);
+
+            return OperationResult<BookDto>.Success(bookDto);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<BookDto>.Failure($"Error saving book: {ex.Message}");
+        }
     }
 
-    public Task<OperationResult<BookDto>> UpdateAsync(Guid id, UpdateBookDto dto)
+    public async Task<OperationResult<BookDto>> UpdateAsync(Guid id, UpdateBookDto dto)
     {
-        throw new NotImplementedException();
+        // Ensure the ID matches
+        dto.Id = id;
+
+        // 1. Format validation
+        var formatValidation = await _updateValidator.ValidateAsync(dto);
+        if (!formatValidation.IsValid)
+        {
+            var errors = formatValidation.Errors.Select(e => e.ErrorMessage).ToList();
+            return OperationResult<BookDto>.Failure(string.Join("; ", errors));
+        }
+
+        // 2. Business/DB validation
+        var (isValid, businessErrors) = await _businessValidator.ValidateUpdateAsync(dto);
+        if (!isValid)
+        {
+            return OperationResult<BookDto>.Failure(string.Join("; ", businessErrors));
+        }
+
+        // 3. Get the existing book (already validated it exists)
+        var book = await _unitOfWork.Books.GetByIdAsync(id);
+
+        // 4. Update simple properties
+        var titleResult = book!.UpdateTitle(dto.Title);
+        if (!titleResult.IsSuccess)
+            return OperationResult<BookDto>.Failure(titleResult.ErrorMessage);
+
+        var descriptionResult = book.UpdateDescription(dto.Description);
+        if (!descriptionResult.IsSuccess)
+            return OperationResult<BookDto>.Failure(descriptionResult.ErrorMessage);
+
+        // Update other fields directly
+        book.Isbn = dto.Isbn;
+        book.PublicationYear = dto.PublicationYear;
+        book.Publisher = dto.Publisher;
+
+        // 5. Update author if changed
+        if (book.Author.Id != dto.AuthorId)
+        {
+            var newAuthor = await _unitOfWork.Authors.GetByIdAsync(dto.AuthorId);
+            book.Author = newAuthor!; // We know it exists due to validation
+        }
+
+        // 6. Update genres
+        // First remove all current genres
+        var currentGenreIds = book.GenreIds.ToList();
+        foreach (var genreId in currentGenreIds)
+        {
+            var removeResult = book.RemoveGenre(genreId);
+            if (!removeResult.IsSuccess)
+                return OperationResult<BookDto>.Failure(removeResult.ErrorMessage);
+        }
+
+        // Add the new genres
+        foreach (var genreId in dto.GenreIds)
+        {
+            var addResult = book.AddGenre(genreId);
+            if (!addResult.IsSuccess)
+                return OperationResult<BookDto>.Failure(addResult.ErrorMessage);
+        }
+
+        try
+        {
+            _unitOfWork.Books.Update(book);
+            await _unitOfWork.SaveChangesAsync();
+
+            var updatedBook = await _unitOfWork.Books.GetBookWithCopiesAsync(book.Id);
+            var bookDto = _mapper.Map<BookDto>(updatedBook);
+
+            return OperationResult<BookDto>.Success(bookDto);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<BookDto>.Failure($"Error updating book: {ex.Message}");
+        }
     }
 
-    public Task<OperationResult<bool>> DeleteAsync(Guid id)
+    public async Task<OperationResult<bool>> DeleteAsync(Guid id)
     {
-        throw new NotImplementedException();
+        // Business validation for deletion
+        var (isValid, businessErrors) = await _businessValidator.ValidateDeleteAsync(id);
+        if (!isValid)
+        {
+            return OperationResult<bool>.Failure(string.Join("; ", businessErrors));
+        }
+
+        var book = await _unitOfWork.Books.GetByIdAsync(id);
+
+        // Soft delete using the domain method
+        var deactivateResult = book!.Deactivate();
+        if (!deactivateResult.IsSuccess)
+            return OperationResult<bool>.Failure(deactivateResult.ErrorMessage);
+
+        try
+        {
+            _unitOfWork.Books.Update(book);
+            await _unitOfWork.SaveChangesAsync();
+
+            return OperationResult<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<bool>.Failure($"Error deleting book: {ex.Message}");
+        }    
     }
 
     public async Task<OperationResult<IEnumerable<BookDto>>> SearchAsync(string searchTerm)
@@ -109,7 +224,7 @@ public class BookService : IBookService
 
         var books = await _unitOfWork.Books.SearchBooksAsync(searchTerm);
         var bookDtos = _mapper.Map<IEnumerable<BookDto>>(books);
-        
+
         return OperationResult<IEnumerable<BookDto>>.Success(bookDtos);
     }
 }
