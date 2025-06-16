@@ -110,39 +110,7 @@ public class Book : AuditEntity
         _genreIds.Remove(genreId);
         return DomainResult.Success();
     }
-
-    public DomainResult AddCopy(Guid copyId)
-    {
-        if (copyId == Guid.Empty)
-            return DomainResult.Failure("Copy ID cannot be empty.");
-
-        if (_copyIds.Contains(copyId))
-            return DomainResult.Failure("Copy already exists in the book.");
-
-        _copyIds.Add(copyId);
-        return DomainResult.Success();
-    }
-
-    public DomainResult RemoveCopy(Guid copyId)
-    {
-        if (copyId == Guid.Empty)
-            return DomainResult.Failure("Copy ID cannot be empty.");
-
-        if (!_copyIds.Contains(copyId))
-            return DomainResult.Failure("Copy does not exist in the book.");
-
-        _copyIds.Remove(copyId);
-        return DomainResult.Success();
-    }
-
-    public DomainResult Activate()
-    {
-        if (IsDeleted == false)
-            return DomainResult.Failure("Book is already active.");
-
-        IsDeleted = false;
-        return DomainResult.Success();
-    }
+    
 
     public DomainResult Deactivate()
     {

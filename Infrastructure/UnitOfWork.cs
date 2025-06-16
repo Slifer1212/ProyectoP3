@@ -13,7 +13,9 @@ public class UnitOfWork : IUnitOfWork
     private IBookRepository? _bookRepository;
     private IAuthorRepository? _authorRepository;
     private IGenreRepository? _genreRepository;
-
+    private IMemberRepository? _memberRepository;
+    private ILoanRepository? _loanRepository;
+    
     public UnitOfWork(LibraryDbContext context)
     {
         _context = context;
@@ -22,7 +24,11 @@ public class UnitOfWork : IUnitOfWork
     public IBookRepository Books => _bookRepository ??= new BookRepository(_context);
     public IAuthorRepository Authors => _authorRepository ??= new AuthorRepository(_context);
     public IGenreRepository Genres => _genreRepository ??= new GenreRepository(_context);
-    private IUnitOfWork _unitOfWorkImplementation;
+    
+    public IMemberRepository Members => _memberRepository ??= new MemberRepository(_context);
+    
+    public ILoanRepository Loans => _loanRepository ??= new LoanRepository(_context);
+    
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

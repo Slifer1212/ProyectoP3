@@ -1,4 +1,5 @@
-﻿using Core.Users;
+﻿using Core.Enums.User;
+using Core.Users;
 
 namespace Application.Interfaces.Repositories;
 public interface IMemberRepository : IBaseRepository<Member, Guid>
@@ -8,4 +9,9 @@ public interface IMemberRepository : IBaseRepository<Member, Guid>
     Task<IEnumerable<Member>> GetMembersWithOverdueLoansAsync();
     Task<Member?> GetMemberWithLoansAsync(Guid memberId);
     Task<IEnumerable<Member>> GetExpiredMembershipsAsync();
+    Task<IEnumerable<Member>> GetMembersWithOutstandingFinesAsync();
+    Task<IEnumerable<Member>> GetMembersByTypeAsync(MemberShipType membershipType);
+    Task<IEnumerable<Member>> GetMembersWithExpiringMembershipAsync(int daysBeforeExpiry);
+    Task<IEnumerable<Member>> SearchMembersAsync(string searchTerm);
+    Task<object> GetMembershipStatisticsAsync();
 }
