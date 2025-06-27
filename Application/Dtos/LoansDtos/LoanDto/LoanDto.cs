@@ -1,10 +1,11 @@
-﻿using Core.Enums.Loans;
+﻿using Application.Dtos.BaseDto;
+using Core.Enums.Loans;
 
-namespace Application.Dtos.LoanDto;
+namespace Application.Dtos.LoansDtos.LoanDto;
 
-public class UpdateLoanDto
+public class LoanDto : AuditEntityDto
 {
-    public Guid Id { get; set; }
+    public Guid Id { get;  set; }
     public Guid MemberId { get;  set; }
     public Guid BookCopyId { get;  set; }
     public DateTime LoanDate { get;  set; }

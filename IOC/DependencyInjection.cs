@@ -1,10 +1,12 @@
 ﻿using Application.Dtos.BookDto;
+using Application.Dtos.GenreDto;
 using Application.Interfaces;
 using Application.Interfaces.Services;
 using Application.Services;
 using Application.Validators.Bussiness.Implementations;
 using Application.Validators.Bussiness.Interfaces;
 using Application.Validators.Format.BookValidations;
+using Application.Validators.Format.GenreValidations;
 using FluentValidation;
 using Infraestructure;
 using MapsterMapper;
@@ -33,6 +35,8 @@ public static class DependencyInjection
         
         services.AddScoped<IValidator<CreateBookDto>, CreateBookFormatValidator>();
         services.AddScoped<IValidator<UpdateBookDto>, UpdateBookFormValidator>();
+        services.AddScoped<IValidator<CreateGenreDto>,CreateGenreValidatior>();
+        services.AddScoped<IValidator<UpdateGenreDto>,UpdateGenreValidator>();
 
         // Mapster
         services.AddSingleton<IMapper, Mapper>();

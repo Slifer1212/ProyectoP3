@@ -9,6 +9,7 @@ public interface IUnitOfWork : IDisposable
     IAuthorRepository Authors { get; }
     IGenreRepository Genres { get; }
     IMemberRepository Members { get; }
+    ILoanRepository Loans { get; }
     
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync();
